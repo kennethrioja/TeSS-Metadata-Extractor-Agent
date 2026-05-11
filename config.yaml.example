@@ -1,0 +1,15 @@
+default_provider: ollama
+
+providers:
+  ollama:
+    model: gemma4
+    base_url: http://localhost:11434/v1
+    api_key_env: OLLAMA_API_KEY
+    temperature: 0.0
+
+  eosc:
+    model: <choose-model-name>
+    base_url: https://vllm.cloud.ai4eosc.eu
+    api_key_env: <your-api-key>
+    temperature: 0.0
+

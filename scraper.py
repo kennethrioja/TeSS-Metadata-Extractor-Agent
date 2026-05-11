@@ -1,38 +1,71 @@
-from bs4 import BeautifulSoup
-import requests
+import asyncio
+from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+from crawl4ai.extraction_strategy import NoExtractionStrategy
 
-def scrape_content(url: str) -> str | None:
+async def scrape_site_to_dict(base_url, single_page=True):
     """
-    Effectue le scraping d'une URL simple en extrayant le texte principal de la page.
+    Scrape a website and return a dictionary {url: markdown}.
+
+    Args:
+        base_url (str): Starting URL
+        single_page (bool): If True, only scrape the provided page.
+                            If False (default), scrape all discovered internal pages.
     """
-    print(f"-> Scraping en cours pour : {url}")
-    try:
-        # Ajout d'un User-Agent pour ressembler à un navigateur réel
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status() # Lève une exception pour les codes 4xx/5xx
+    results_dict = {}
 
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Tentative d'extraire le contenu du corps principal
-        main_content = soup.find(['article', 'main', 'body'])
-        if main_content:
-            text = main_content.get_text(separator='\n', strip=True)
-        else:
-            text = soup.get_text(separator=' ', strip=True)
-        
-        # On tronque le texte pour limiter le coût API et la taille du contexte
-        return text[:15000] 
+    # Optimized configuration for LLM content
+    browser_config = BrowserConfig(headless=True)
+    run_config = CrawlerRunConfig(
+        word_count_threshold=10,        # Ignore useless text fragments
+        exclude_external_links=True,    # Stay on the site
+        process_iframes=False           # Save time
+    )
 
-    except requests.exceptions.RequestException as e:
-        print(f"ERREUR de scraping pour {url}: {e}")
-        return None
-    
+    async with AsyncWebCrawler(config=browser_config) as crawler:
+        # 1. Crawl the main page
+        result = await crawler.arun(url=base_url, config=run_config)
 
+        if not result.success:
+            print(f"Error on main page {base_url}: {result.error_message}")
+            return results_dict
+
+        # Single page mode: return the result directly
+        if single_page:
+            print("Single page mode: scraping the main page only.")
+            results_dict[result.url] = result.markdown
+            return results_dict
+
+        # Full mode: discover and scrape all internal pages
+        internal_links = [
+            link['href']
+            for link in result.links.get("internal", [])
+            if base_url in link['href']
+        ]
+        # Add the home page
+        internal_links.append(base_url)
+        # Remove duplicates
+        internal_links = list(set(internal_links))
+
+        print(f"Full mode: {len(internal_links)} page(s) found.")
+
+        # 2. Scrape all pages in parallel
+        pages_results = await crawler.arun_many(urls=internal_links, config=run_config)
+
+        for res in pages_results:
+            if res.success:
+                results_dict[res.url] = res.markdown
+            else:
+                print(f"Error on {res.url}: {res.error_message}")
+
+    return results_dict
+
+
+# Usage examples
 if __name__ == "__main__":
-    url = "https://carpentries-incubator.github.io/python-intermediate-development/"
+    # Single page only (default behavior)
+    asyncio.run(scrape_site_to_dict("https://example.com", single_page=True))
 
-    text = scrape_content(url=url)
-    print(text)
+    # Full site 
+    asyncio.run(scrape_site_to_dict("https://example.com"))
+    # or explicitly:
+    asyncio.run(scrape_site_to_dict("https://example.com", single_page=False))

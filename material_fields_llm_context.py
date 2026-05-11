@@ -1,4 +1,4 @@
-You are an expert data extraction assistant. Your task is to extract metadata from the provided raw text (scraped from a training material web page) and format it into a structured JSON object.
+PROMPT_TEMPLATE = '''You are an expert data extraction assistant. Your task is to extract metadata from the provided raw text (scraped from a training material web page) and format it into a structured JSON object.
 
 Follow these strict rules:
 1. Output ONLY a valid JSON object. Do not include Markdown blocks (like ```json), explanations, or any other text.
@@ -8,7 +8,7 @@ Follow these strict rules:
 
 Extract the data using the following JSON keys and data types:
 
-{
+{{
   "name": "Title of the material (Type: String)",
   "url": "URL of the material (Type: String)",
   "description": "Description of the material (Type: String)",
@@ -28,11 +28,11 @@ Extract the data using the following JSON keys and data types:
   "learningResourceType": "Type of the material, e.g., Course (Type: String)",
   "teaches": "Learning objectives of the material (Type: String)",
   "competencyRequired": "Prerequisites before taking the material (Type: Array of Strings)"
-}
+}}
 
 Input Text to process:
-[INSERT_SCRAPED_TEXT_HERE]
+{scraped_text}
 
 
 KEYWORDS TO CHOOSE FROM:
-[LIST_OF_KEYWORDS]
+{keywords}'''
