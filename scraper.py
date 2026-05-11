@@ -1,38 +1,44 @@
-from bs4 import BeautifulSoup
-import requests
+import asyncio
+from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+from crawl4ai.extraction_strategy import NoExtractionStrategy
 
-def scrape_content(url: str) -> str | None:
-    """
-    Effectue le scraping d'une URL simple en extrayant le texte principal de la page.
-    """
-    print(f"-> Scraping en cours pour : {url}")
-    try:
-        # Ajout d'un User-Agent pour ressembler à un navigateur réel
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status() # Lève une exception pour les codes 4xx/5xx
+async def scrape_site_to_dict(base_url):
+    results_dict = {}
 
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Tentative d'extraire le contenu du corps principal
-        main_content = soup.find(['article', 'main', 'body'])
-        if main_content:
-            text = main_content.get_text(separator='\n', strip=True)
-        else:
-            text = soup.get_text(separator=' ', strip=True)
-        
-        # On tronque le texte pour limiter le coût API et la taille du contexte
-        return text[:15000] 
+    # Configuration optimisée pour le contenu LLM
+    browser_config = BrowserConfig(headless=True)
+    run_config = CrawlerRunConfig(
+        word_count_threshold=10,        # Ignore les fragments de texte inutiles
+        exclude_external_links=True,   # Reste sur le site
+        process_iframes=False          # Gain de temps
+    )
 
-    except requests.exceptions.RequestException as e:
-        print(f"ERREUR de scraping pour {url}: {e}")
-        return None
-    
+    async with AsyncWebCrawler(config=browser_config) as crawler:
+        # 1. On crawle la page principale pour découvrir les liens
+        # Note: Crawl4AI peut aussi gérer le crawling récursif automatiquement
+        result = await crawler.arun(url=base_url, config=run_config)
 
-if __name__ == "__main__":
-    url = "https://carpentries-incubator.github.io/python-intermediate-development/"
+        if result.success:
+            # On récupère les liens internes (sublinks)
+            internal_links = [link['href'] for link in result.links.get("internal", []) if base_url in link['href']]
+            # On ajoute la home
+            internal_links.append(base_url)
+            # On retire les doublons
+            internal_links = list(set(internal_links))
 
-    text = scrape_content(url=url)
-    print(text)
+            print(f"Pages trouvées : {len(internal_links)}")
+
+            # 2. On scrappe toutes les pages en parallèle
+            # Crawl4AI gère très bien les sessions pour éviter d'être banni
+            pages_results = await crawler.arun_many(urls=internal_links, config=run_config)
+
+            for res in pages_results:
+                if res.success:
+                    # On stocke le Markdown (parfait pour ton LLM)
+                    results_dict[res.url] = res.markdown
+                else:
+                    print(f"Erreur sur {res.url}: {res.error_message}")
+
+    return results_dict
+
+
