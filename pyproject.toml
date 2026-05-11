@@ -5,11 +5,17 @@ description = "Default template for PDM package"
 authors = [
     {name = "Kenneth", email = "kenneth.brian.rioja@cern.ch"},
 ]
-dependencies = []
-requires-python = "==3.12.*"
+dependencies = ["crawl4ai>=0.8.6"]
+requires-python = ">=3.12.*,<3.14"
 readme = "README.md"
 license = {text = "CC-4.0"}
 
 
 [tool.pdm]
 distribution = false
+
+[dependency-groups]
+dev = [
+    "requests>=2.33.1",
+    "bs4>=0.0.2",
+]
