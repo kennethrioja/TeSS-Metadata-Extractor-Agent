@@ -2,43 +2,70 @@ import asyncio
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from crawl4ai.extraction_strategy import NoExtractionStrategy
 
-async def scrape_site_to_dict(base_url):
+async def scrape_site_to_dict(base_url, single_page=True):
+    """
+    Scrape a website and return a dictionary {url: markdown}.
+
+    Args:
+        base_url (str): Starting URL
+        single_page (bool): If True, only scrape the provided page.
+                            If False (default), scrape all discovered internal pages.
+    """
     results_dict = {}
 
-    # Configuration optimisée pour le contenu LLM
+    # Optimized configuration for LLM content
     browser_config = BrowserConfig(headless=True)
     run_config = CrawlerRunConfig(
-        word_count_threshold=10,        # Ignore les fragments de texte inutiles
-        exclude_external_links=True,   # Reste sur le site
-        process_iframes=False          # Gain de temps
+        word_count_threshold=10,        # Ignore useless text fragments
+        exclude_external_links=True,    # Stay on the site
+        process_iframes=False           # Save time
     )
 
     async with AsyncWebCrawler(config=browser_config) as crawler:
-        # 1. On crawle la page principale pour découvrir les liens
-        # Note: Crawl4AI peut aussi gérer le crawling récursif automatiquement
+        # 1. Crawl the main page
         result = await crawler.arun(url=base_url, config=run_config)
 
-        if result.success:
-            # On récupère les liens internes (sublinks)
-            internal_links = [link['href'] for link in result.links.get("internal", []) if base_url in link['href']]
-            # On ajoute la home
-            internal_links.append(base_url)
-            # On retire les doublons
-            internal_links = list(set(internal_links))
+        if not result.success:
+            print(f"Error on main page {base_url}: {result.error_message}")
+            return results_dict
 
-            print(f"Pages trouvées : {len(internal_links)}")
+        # Single page mode: return the result directly
+        if single_page:
+            print("Single page mode: scraping the main page only.")
+            results_dict[result.url] = result.markdown
+            return results_dict
 
-            # 2. On scrappe toutes les pages en parallèle
-            # Crawl4AI gère très bien les sessions pour éviter d'être banni
-            pages_results = await crawler.arun_many(urls=internal_links, config=run_config)
+        # Full mode: discover and scrape all internal pages
+        internal_links = [
+            link['href']
+            for link in result.links.get("internal", [])
+            if base_url in link['href']
+        ]
+        # Add the home page
+        internal_links.append(base_url)
+        # Remove duplicates
+        internal_links = list(set(internal_links))
 
-            for res in pages_results:
-                if res.success:
-                    # On stocke le Markdown (parfait pour ton LLM)
-                    results_dict[res.url] = res.markdown
-                else:
-                    print(f"Erreur sur {res.url}: {res.error_message}")
+        print(f"Full mode: {len(internal_links)} page(s) found.")
+
+        # 2. Scrape all pages in parallel
+        pages_results = await crawler.arun_many(urls=internal_links, config=run_config)
+
+        for res in pages_results:
+            if res.success:
+                results_dict[res.url] = res.markdown
+            else:
+                print(f"Error on {res.url}: {res.error_message}")
 
     return results_dict
 
 
+# Usage examples
+if __name__ == "__main__":
+    # Single page only (default behavior)
+    asyncio.run(scrape_site_to_dict("https://example.com", single_page=True))
+
+    # Full site 
+    asyncio.run(scrape_site_to_dict("https://example.com"))
+    # or explicitly:
+    asyncio.run(scrape_site_to_dict("https://example.com", single_page=False))
