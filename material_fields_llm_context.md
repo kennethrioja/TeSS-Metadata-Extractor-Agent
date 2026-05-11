@@ -32,3 +32,7 @@ Extract the data using the following JSON keys and data types:
 
 Input Text to process:
 [INSERT_SCRAPED_TEXT_HERE]
+
+
+KEYWORDS TO CHOOSE FROM:
+[LIST_OF_KEYWORDS]
