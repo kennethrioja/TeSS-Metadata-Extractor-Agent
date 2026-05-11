@@ -1,0 +1,4 @@
+bs4
+crawl4ai
+requests
+openai
