@@ -1,6 +1,8 @@
 import asyncio
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
 from crawl4ai.extraction_strategy import NoExtractionStrategy
+import re
+
 
 async def scrape_site_to_dict(base_url, single_page=True):
     """
@@ -32,7 +34,7 @@ async def scrape_site_to_dict(base_url, single_page=True):
         # Single page mode: return the result directly
         if single_page:
             print("Single page mode: scraping the main page only.")
-            results_dict[result.url] = result.markdown
+            results_dict[result.url] = clean_markdown_urls(result.markdown)
             return results_dict
 
         # Full mode: discover and scrape all internal pages
@@ -53,11 +55,31 @@ async def scrape_site_to_dict(base_url, single_page=True):
 
         for res in pages_results:
             if res.success:
-                results_dict[res.url] = res.markdown
+                results_dict[res.url] = clean_markdown_urls(res.markdown)
             else:
                 print(f"Error on {res.url}: {res.error_message}")
 
     return results_dict
+
+import re
+
+def clean_markdown_urls(text):
+    # Regex breakdown:
+    # (?<=\()https?://\S+(?=\))  -> Matches URLs inside parentheses (Markdown links)
+    # |                          -> OR
+    # (?<!\]\()https?://\S+      -> Matches bare URLs not preceded by ']('
+    
+    # This pattern focuses on strings starting with http/https 
+    # and continues until it hits a space or a closing parenthesis.
+    url_pattern = r'https?://[^\s\)]+'
+    
+    # We replace the found URLs with an empty string
+    cleaned_text = re.sub(url_pattern, '', text)
+    
+    # Optional: Clean up empty parentheses left behind: []() -> []
+    cleaned_text = cleaned_text.replace('()', '').replace('( "Permalink to this headline")', '')
+    
+    return cleaned_text
 
 
 # Usage examples
