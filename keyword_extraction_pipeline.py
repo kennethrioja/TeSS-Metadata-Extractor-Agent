@@ -267,7 +267,7 @@ if __name__ == "__main__":
 
     TARGET_URL = "https://alan-turing-institute.github.io/rse-course/html/index.html"
     LLM_ACTIVATED = True  # toggle this to skip the LLM pass
-    TOP_K = 24
+    TOP_K = 16
     BATCH_SIZE = 8  # keywords per LLM call; 8 is safe for 7B models
     PROVIDER_NAME = "eosc"  # None -> default_provider from config.yaml
 
