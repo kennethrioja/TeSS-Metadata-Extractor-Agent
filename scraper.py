@@ -94,7 +94,9 @@ if __name__ == "__main__":
         )
     )
     for key, content in page_dict.items():
-        content = clean_markdown_urls(content)
+        # saving to disk
+        with open("test_scrap.md", 'w') as f_in:
+            f_in.write(content)
         print(content)
         break
     # # Full site
