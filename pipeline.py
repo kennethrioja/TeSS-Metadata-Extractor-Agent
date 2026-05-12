@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import time
+import os
 from collections.abc import Iterable
 from datetime import datetime
 
@@ -109,8 +110,8 @@ def validate_keywords(
 # ============================================================================
 # Merge per-chunk MaterialMetadata
 # ============================================================================
-_LIST_FIELDS = {"keywords", "author", "contributor", "competencyRequired"}
-_LONGEST_TEXT_FIELDS = {"description", "teaches"}
+_LIST_FIELDS = {"keywords", "authors", "contributors", "prerequisites"}
+_LONGEST_TEXT_FIELDS = {"description", "learning_objectives"}
 
 
 def _merge_scalar(values: list[str], strategy: str = "first") -> str:
@@ -139,7 +140,7 @@ def merge_chunk_results(
 ) -> tuple[MaterialMetadata, list[str]]:
     """Fuse per-chunk results into one MaterialMetadata.
 
-    - Scalar fields: first non-"Not found" (or longest for description/teaches).
+    - Scalar fields: first non-"Not found" (or longest for description/learning_objectives).
     - List fields: union, deduped, order preserved.
     - "keywords": regex top_k ∪ validated LLM keywords across all chunks.
 
@@ -322,7 +323,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
-    provider = "ollama"
+    provider = os.environ.get('PROVIDER')
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)

@@ -13,6 +13,7 @@ in ``pipeline.py``.
 
 import json
 import logging
+import os
 from pathlib import Path
 
 from openai import AsyncOpenAI, OpenAI
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    provider = "ollama"
+    provider = os.environ.get('PROVIDER')
     n_chunks = 3
     max_concurrency = 4
 

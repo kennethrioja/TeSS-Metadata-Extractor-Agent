@@ -13,6 +13,7 @@ output so the two JSONs are directly comparable.
 
 import json
 import logging
+import os
 from pathlib import Path
 
 from openai import AsyncOpenAI, OpenAI
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    provider = "ollama"
+    provider = os.environ.get('PROVIDER')
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
