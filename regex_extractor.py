@@ -32,22 +32,6 @@ def load_keywords(path: Path = KEYWORDS_PATH) -> list[str]:
     return data["ai_filtered_keywords"]
 
 
-# def build_pattern(keyword: str) -> str:
-#     """Build a robust boundary pattern for a single keyword.
-
-#     - Uses \\b when the edge char is alphanumeric/_ (normal case).
-#     - Falls back to (?<!\\w) / (?!\\w) when the edge is non-word
-#       (e.g. 'c++', '.net', 'c#') so the boundary still works.
-#     - Allows flexible whitespace inside multi-word keywords so that
-#       'machine learning' matches 'machine\\nlearning' too.
-#     """
-#     escaped = re.escape(keyword)
-#     escaped = re.sub(r"\s+", r"\\s+", escaped)
-
-#     left = r"\b" if keyword[:1].isalnum() or keyword[:1] == "_" else r"(?<!\w)"
-#     right = r"\b" if keyword[-1:].isalnum() or keyword[-1:] == "_" else r"(?!\w)"
-#     return left + escaped + right
-
 def build_pattern(keyword: str) -> str:
     """Build a robust boundary pattern for a single keyword.
 
