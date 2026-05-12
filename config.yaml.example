@@ -10,6 +10,6 @@ providers:
   eosc:
     model: <choose-model-name>
     base_url: https://vllm.cloud.ai4eosc.eu
-    api_key_env: <your-api-key>
+    api_key_env: EOSC_API_KEY
     temperature: 0.0
     max_concurrency: 1
