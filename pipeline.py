@@ -110,8 +110,8 @@ def validate_keywords(
 # ============================================================================
 # Merge per-chunk MaterialMetadata
 # ============================================================================
-_LIST_FIELDS = {"keywords", "authors", "contributors", "prerequisites"}
-_LONGEST_TEXT_FIELDS = {"description", "learning_objectives"}
+_LIST_FIELDS = {"keywords", "authors", "contributors"}
+_LONGEST_TEXT_FIELDS = {"description", "learning_objectives", "prerequisites"}
 
 
 def _merge_scalar(values: list[str], strategy: str = "first") -> str:

@@ -9,7 +9,7 @@ class MaterialMetadata(BaseModel):
         description="Description of the material"
     )
     resource_type: list[Literal["Blog post", "Case Study", "Course Materials", "Documentation", "E-learning", "Exercise", "Guide", "Handbook", "Lessons", "Podcast", "Poster", "Presentation", "Reference Material", "Slides", "Tutorial", "Video", "Webinar", "Workshop"]] = Field(
-        description="Type of the material"
+        description="Type of the material, MAY be more than one"
     )
     # scientific_topics: str = Field(
     #     description="Scientific field of the material, following a certain ontology, by default from EDAM"
@@ -18,7 +18,7 @@ class MaterialMetadata(BaseModel):
         description="Keywords that describe the material"
     )
     licence: str = Field(
-        description="Licence following SPDX standardized short identifier, e.g. CC-BY-4.0"
+        description="Licence MUST follow SPDX standardized short identifier AND NOT the human readable format, e.g. it must be CC-BY-4.0 AND NOT Creative Commons ..."
     )
     status: Literal["archived", "under Development", "active"] = Field(
         description="Current status of the material"
@@ -41,8 +41,8 @@ class MaterialMetadata(BaseModel):
     target_audience: list[Literal["Data Steward", "Data Manager", "Data Scientist", "Master Student", "PhD Student", "Physicist", "Postdoc", "Project Manager", "Researcher", "Research Software Engineer", "Software Engineer", "Specialist", "Trainer", "Training Designer", "Training Instructor", "Teacher", "Undergraduate Student"]] = Field(
         description="Target audiences of the material"
     )
-    prerequisites: list[str] = Field(
-        description="Prerequisites before taking the material"
+    prerequisites: str = Field(
+        description="Prerequisites before taking the material, MUST be written in Markdown"
     )
     competency_level: Literal["beginner", "intermediate", "advanced"] = Field(
         description="Expertise level to take the material"
@@ -50,12 +50,12 @@ class MaterialMetadata(BaseModel):
     learning_objectives: str = Field(
         description="Learning objectives of the material"
     )
-    dateCreated: str = Field(
-        description="Creation date (YYYY-MM-DD)"
+    date_created: str = Field(
+        description="Creation date (YYYY-MM-DD), set to an empty string if not found in text"
     )
-    dateModified: str = Field(
-        description="Modified date (YYYY-MM-DD)"
+    date_modified: str = Field(
+        description="Modified date (YYYY-MM-DD), set to an empty string if not found in text"
     )
-    datePublished: str = Field(
-        description="Published date (YYYY-MM-DD)"
+    date_published: str = Field(
+        description="Published date (YYYY-MM-DD), set to an empty string if not found in text"
     )

@@ -9,25 +9,23 @@ Follow these strict rules:
 Extract the data using the following JSON keys and data types:
 
 {
-  "name": "Title of the material (Type: String)",
-  "url": "URL of the material (Type: String)",
   "description": "Description of the material (Type: String)",
+  "resource_type": "Type of the material, e.g., Course (Type: String)",
   "keywords": "Key words that describe the material (Type: Array of Strings)",
+  "licence": "Licence of the material, following SPDX standardized short identifier, e.g., CC-BY-4.0 (Type: String)",
+  "status": "Current status. MUST be strictly one of: 'Archived', 'Under Development', or 'Active' (Type: String)",
   "contact": "Contact email (Type: String)",
-  "license": "License of the material, following SPDX standardized short identifier, e.g., CC-BY-4.0 (Type: String)",
-  "creativeWorkStatus": "Current status. MUST be strictly one of: 'Archived', 'Under Development', or 'Active' (Type: String)",
-  "identifier": "DOI of the material (Type: String)",
+  "doi": "DOI of the material (Type: String)",
   "version": "Version of the material (Type: String)",
+  "authors": "List of authors (Type: Array of Strings)",
+  "contributors": "List of contributors (Type: Array of Strings)",
+  "target_audience": "Target audience of the material (Type: String)",
+  "prerequisites": "Prerequisites before taking the material (Type: Array of Strings)"
+  "competency_level": "Prerequisites before taking the material, MUST be written in Markdown"
+  "learning_objectives": "Learning objectives of the material (Type: String)",
   "dateCreated": "Creation date of the material (Type: String, YYYY-MM-DD)",
   "dateModified": "Published date of the material (Type: String, YYYY-MM-DD)",
   "datePublished": "Modified date of the material (Type: String, YYYY-MM-DD)",
-  "author": "List of authors (Type: Array of Strings)",
-  "contributor": "List of contributors (Type: Array of Strings)",
-  "field": "Scientific field of the material (Type: String)",
-  "audience": "Target audience of the material (Type: String)",
-  "learningResourceType": "Type of the material, e.g., Course (Type: String)",
-  "teaches": "Learning objectives of the material (Type: String)",
-  "competencyRequired": "Prerequisites before taking the material (Type: Array of Strings)"
 }
 
 Input Text to process:
