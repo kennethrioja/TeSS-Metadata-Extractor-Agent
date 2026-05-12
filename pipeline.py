@@ -321,7 +321,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
+    target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
     provider = "ollama"
 
     async def main() -> None:
@@ -334,7 +334,7 @@ if __name__ == "__main__":
             report = await extract_page_metadata(
                 content,
                 top_k=10,
-                n_chunks=3,
+                n_chunks=2,
                 provider=provider,
                 regex_enabled=True,
             )
