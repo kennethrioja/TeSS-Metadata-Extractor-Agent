@@ -5,7 +5,7 @@ from pathlib import Path
 from openai import OpenAI
 
 from config import get_provider_config
-from material_fields_llm_context import PROMPT_TEMPLATE
+from prompt_templates import PROMPT_TEMPLATE
 from schemas import MaterialMetadata
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ SYSTEM_PROMPT = (
 def load_keywords(path: Path = KEYWORDS_PATH) -> list[str]:
     with open(path, "r", encoding="utf-8") as f_in:
         data = json.load(f_in)
-    return data["keywords"]
+    return data["ai_filtered_keywords"]
 
 
 KEYWORDS = load_keywords()
@@ -59,7 +59,7 @@ def analyze_content_with_llm(
     )
 
     user_message = build_user_message(content)
-
+    # logger.info(f"{user_message}")
     completion = client.beta.chat.completions.parse(
         model=cfg.model,
         temperature=cfg.temperature,
@@ -83,26 +83,51 @@ def analyze_content_with_llm(
 # Execution
 if __name__ == "__main__":
     import asyncio
-
+    from time import time
     from scraper import scrape_site_to_dict
-
+    from datetime import datetime
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
     scraped_content = asyncio.run(
         scrape_site_to_dict(target_url, single_page=True)
     )
-
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     for url, content in scraped_content.items():
         print(f"URL: {url} | Content size: {len(content)} characters")
-        result = analyze_content_with_llm(content=content, provider="ollama")
+        total_length = len(content)
+        max_size = total_length // 3
+        chunks = [content[i: i + max_size] for i in range(0, total_length, max_size)]
+        all_json = []
+
+        for idx, chunk in enumerate(chunks):
+            start = time()
+            result = analyze_content_with_llm(content=chunk, provider="ollama")
+            end = time()
+            delta = end - start
+    
+            print(f"Chunk {idx} analyzed in xecuted in {delta} seconds")
+            print(result.model_dump_json(indent=2))
+            all_json.append(result)
+
+            
+            filename = f"results_{timestamp}.json"
+            with open(filename, "a+") as f:
+                json.dump({
+                    "chunk_number": idx,
+                    "execution_time": delta,
+                    "results": result.model_dump()
+                }, f, indent=2)
+
+
 
         # result is a validated Pydantic object — full IDE autocomplete works
-        print(f"Title: {result.name}")
-        print(f"License: {result.license}")
-        print(f"Status: {result.creativeWorkStatus}")
-        print(f"Keywords: {result.keywords}")
+        # print(f"Title: {result.name}")
+        # print(f"License: {result.license}")
+        # print(f"Status: {result.creativeWorkStatus}")
+        # print(f"Keywords: {result.keywords}")
 
-        # Or dump the whole thing as JSON
-        print(result.model_dump_json(indent=2))
+        # # Or dump the whole thing as JSON
+        # print(result.model_dump_json(indent=2))
+        print(all_json)
         break

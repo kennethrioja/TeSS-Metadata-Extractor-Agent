@@ -5,8 +5,6 @@ from pydantic import BaseModel, Field
 class MaterialMetadata(BaseModel):
     """Structured metadata extracted from a training material web page."""
 
-    name: str = Field(description="Title of the material")
-    url: str = Field(description="URL of the material")
     description: str = Field(description="Description of the material")
     keywords: list[str] = Field(description="Key words that describe the material")
     contact: str = Field(description="Contact email")

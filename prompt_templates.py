@@ -6,6 +6,22 @@ Follow these strict rules:
 3. Dates must be formatted as "YYYY-MM-DD" whenever possible.
 4. Fields designated as lists must be returned as JSON arrays of strings.
 
+Input Text to process:
+{scraped_text}
+
+
+KEYWORDS TO CHOOSE FROM:
+{keywords}'''
+
+
+PROMPT_TEMPLATE_LEGACY = '''You are an expert data extraction assistant. Your task is to extract metadata from the provided raw text (scraped from a training material web page) and format it into a structured JSON object.
+
+Follow these strict rules:
+1. Output ONLY a valid JSON object. Do not include Markdown blocks (like ```json), explanations, or any other text.
+2. If a specific piece of information cannot be found in the text, you MUST assign the exact string "Not found" to that key. Do not use null, None, or empty strings.
+3. Dates must be formatted as "YYYY-MM-DD" whenever possible.
+4. Fields designated as lists must be returned as JSON arrays of strings.
+
 Extract the data using the following JSON keys and data types:
 
 {{
