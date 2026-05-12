@@ -32,17 +32,37 @@ def load_keywords(path: Path = KEYWORDS_PATH) -> list[str]:
     return data["ai_filtered_keywords"]
 
 
+# def build_pattern(keyword: str) -> str:
+#     """Build a robust boundary pattern for a single keyword.
+
+#     - Uses \\b when the edge char is alphanumeric/_ (normal case).
+#     - Falls back to (?<!\\w) / (?!\\w) when the edge is non-word
+#       (e.g. 'c++', '.net', 'c#') so the boundary still works.
+#     - Allows flexible whitespace inside multi-word keywords so that
+#       'machine learning' matches 'machine\\nlearning' too.
+#     """
+#     escaped = re.escape(keyword)
+#     escaped = re.sub(r"\s+", r"\\s+", escaped)
+
+#     left = r"\b" if keyword[:1].isalnum() or keyword[:1] == "_" else r"(?<!\w)"
+#     right = r"\b" if keyword[-1:].isalnum() or keyword[-1:] == "_" else r"(?!\w)"
+#     return left + escaped + right
+
 def build_pattern(keyword: str) -> str:
     """Build a robust boundary pattern for a single keyword.
 
-    - Uses \\b when the edge char is alphanumeric/_ (normal case).
-    - Falls back to (?<!\\w) / (?!\\w) when the edge is non-word
-      (e.g. 'c++', '.net', 'c#') so the boundary still works.
-    - Allows flexible whitespace inside multi-word keywords so that
-      'machine learning' matches 'machine\\nlearning' too.
+    - Splits the keyword on whitespace so re.escape never touches a space
+      (re.escape in 3.7+ adds a backslash before whitespace, which
+      breaks naive \\s+ substitution).
+    - Joins tokens with \\s+ so multi-word keywords still match across
+      line breaks and double spaces.
+    - Uses \\b at alphanumeric edges, (?<!\\w) / (?!\\w) otherwise, so
+      keywords like 'c++', '.net', 'c#' get correct boundaries.
     """
-    escaped = re.escape(keyword)
-    escaped = re.sub(r"\s+", r"\\s+", escaped)
+    tokens = keyword.split()
+    if not tokens:
+        return ""
+    escaped = r"\s+".join(re.escape(t) for t in tokens)
 
     left = r"\b" if keyword[:1].isalnum() or keyword[:1] == "_" else r"(?<!\w)"
     right = r"\b" if keyword[-1:].isalnum() or keyword[-1:] == "_" else r"(?!\w)"
@@ -105,7 +125,7 @@ if __name__ == "__main__":
         counts = count_keyword_occurrences(content, keywords)
         delta = time() - start
         
-        selected, remaining = split_keywords(counts, keywords, k=50)
+        selected, remaining = split_keywords(counts, keywords, k=100)
 
         print(f"Regex extraction completed in {delta:.4f} seconds")
         print(f"Matched {len(counts)} / {len(keywords)} candidate keywords")
