@@ -6,10 +6,10 @@ providers:
     base_url: http://localhost:11434/v1
     api_key_env: OLLAMA_API_KEY
     temperature: 0.0
-
+    max_concurrency: 1
   eosc:
     model: <choose-model-name>
     base_url: https://vllm.cloud.ai4eosc.eu
     api_key_env: <your-api-key>
     temperature: 0.0
-
+    max_concurrency: 1

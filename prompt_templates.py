@@ -1,54 +1,59 @@
-PROMPT_TEMPLATE = '''You are an expert data extraction assistant. Your task is to extract metadata from the provided raw text (scraped from a training material web page) and format it into a structured JSON object.
+"""Prompt templates for the LLM metadata extractor.
 
-Follow these strict rules:
-1. Output ONLY a valid JSON object. Do not include Markdown blocks (like ```json), explanations, or any other text.
-2. If a specific piece of information cannot be found in the text, you MUST assign the exact string "Not found" to that key. Do not use null, None, or empty strings.
-3. Dates must be formatted as "YYYY-MM-DD" whenever possible.
-4. Fields designated as lists must be returned as JSON arrays of strings.
+Designed to be robust with small models (7B-class, Ollama-hosted). Key choices:
 
-Input Text to process:
+- One language throughout (English). Mixing languages between system and
+  user messages noticeably degrades small models.
+- Sections are delimited with markdown headers and XML tags so the model
+  can locate each block even with weak attention. The text-to-analyse and
+  the allowed-keywords list are wrapped explicitly.
+- The closed-vocabulary constraint on the `keywords` field is stated
+  redundantly ("copy verbatim", "do not invent", "do not paraphrase").
+  Post-pipeline validation filters invented keywords as a safety net.
+- The final cue ("Now produce the JSON object.") exploits recency bias to
+  re-anchor the task after a potentially long text block.
+- The JSON-output rules don't dwell on syntax — the structured-output
+  layer enforces the schema. The prompt focuses on semantic rules.
+"""
+
+SYSTEM_PROMPT = (
+    "You are a metadata-extraction assistant. You read a training-material "
+    "web page and return a single JSON object that fits the provided schema. "
+    'If a field is not in the text, you return the exact string "Not found". '
+    "You never invent information."
+)
+
+
+PROMPT_TEMPLATE = """\
+Extract metadata from the training-material text below and return it as a JSON object.
+
+## Output rules
+
+1. Return exactly ONE JSON object. No markdown fences, no commentary, no preamble, no trailing text.
+2. If information for a field is not in the text, set that field to the exact string "Not found".
+3. Dates must use the format "YYYY-MM-DD".
+4. List-typed fields must be JSON arrays of strings. Use [] only when no item applies.
+
+## Keywords field — strict rules
+
+The `keywords` field must contain ONLY entries copied verbatim from the allowed list below.
+
+- Do not invent keywords.
+- Do not paraphrase keywords.
+- Do not translate keywords.
+- Copy each selected keyword exactly as it appears in the list (same spelling, same case, same punctuation).
+- Select only keywords whose topic is clearly present in the text.
+- If no keyword from the list applies, return [].
+
+<allowed_keywords>
+{keywords}
+</allowed_keywords>
+
+## Text to analyze
+
+<text>
 {scraped_text}
+</text>
 
-
-KEYWORDS TO CHOOSE FROM:
-{keywords}'''
-
-
-PROMPT_TEMPLATE_LEGACY = '''You are an expert data extraction assistant. Your task is to extract metadata from the provided raw text (scraped from a training material web page) and format it into a structured JSON object.
-
-Follow these strict rules:
-1. Output ONLY a valid JSON object. Do not include Markdown blocks (like ```json), explanations, or any other text.
-2. If a specific piece of information cannot be found in the text, you MUST assign the exact string "Not found" to that key. Do not use null, None, or empty strings.
-3. Dates must be formatted as "YYYY-MM-DD" whenever possible.
-4. Fields designated as lists must be returned as JSON arrays of strings.
-
-Extract the data using the following JSON keys and data types:
-
-{{
-  "name": "Title of the material (Type: String)",
-  "url": "URL of the material (Type: String)",
-  "description": "Description of the material (Type: String)",
-  "keywords": "Key words that describe the material (Type: Array of Strings)",
-  "contact": "Contact email (Type: String)",
-  "license": "License of the material, following SPDX standardized short identifier, e.g., CC-BY-4.0 (Type: String)",
-  "creativeWorkStatus": "Current status. MUST be strictly one of: 'Archived', 'Under Development', or 'Active' (Type: String)",
-  "identifier": "DOI of the material (Type: String)",
-  "version": "Version of the material (Type: String)",
-  "dateCreated": "Creation date of the material (Type: String, YYYY-MM-DD)",
-  "dateModified": "Published date of the material (Type: String, YYYY-MM-DD)",
-  "datePublished": "Modified date of the material (Type: String, YYYY-MM-DD)",
-  "author": "List of authors (Type: Array of Strings)",
-  "contributor": "List of contributors (Type: Array of Strings)",
-  "field": "Scientific field of the material (Type: String)",
-  "audience": "Target audience of the material (Type: String)",
-  "learningResourceType": "Type of the material, e.g., Course (Type: String)",
-  "teaches": "Learning objectives of the material (Type: String)",
-  "competencyRequired": "Prerequisites before taking the material (Type: Array of Strings)"
-}}
-
-Input Text to process:
-{scraped_text}
-
-
-KEYWORDS TO CHOOSE FROM:
-{keywords}'''
+Now produce the JSON object.
+"""
