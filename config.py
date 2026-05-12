@@ -18,6 +18,7 @@ class ProviderConfig:
     base_url: str
     temperature: float
     api_key_env: Optional[str] = None
+    max_concurrency: int = 1
 
     @property
     def api_key(self) -> Optional[str]:
