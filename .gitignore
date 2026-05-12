@@ -218,3 +218,5 @@ __marimo__/
 .streamlit/secrets.toml
 config.yaml
 known_keywords.json
+results_*
+*_results_*

@@ -7,8 +7,8 @@ parameter lets callers narrow the candidate list — typically to the
 
 The ``__main__`` here is an **ablation harness**: it runs the full chunked,
 async LLM pipeline with regex disabled (no top_k pre-selection, no
-union at merge time). The output format is identical to ``pipeline.py``'s
-output so the two JSONs are directly comparable.
+union at merge time). Useful for comparing against the regex+LLM pipeline
+in ``pipeline.py``.
 """
 
 import json
@@ -115,14 +115,17 @@ if __name__ == "__main__":
     from datetime import datetime
 
     # Local imports: avoid a top-level circular import with pipeline.py,
-    # which already imports from this module.
-    from pipeline import extract_page_metadata
+    # which already imports from this module. The pipeline's helpers are
+    # the source of truth for chunking, async orchestration, and merging.
+    from pipeline import analyze_chunks_async, chunk_text, merge_chunk_results
     from scraper import scrape_site_to_dict
 
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
     provider = "ollama"
+    n_chunks = 3
+    max_concurrency = 4
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
@@ -131,16 +134,36 @@ if __name__ == "__main__":
         all_results: dict[str, dict] = {}
         for url, content in scraped.items():
             logger.info(
-                "Processing %s (%d chars) — regex DISABLED", url, len(content)
+                "Processing %s (%d chars) — regex DISABLED, LLM gets full keyword list",
+                url,
+                len(content),
             )
-            report = await extract_page_metadata(
-                content,
-                n_chunks=2,
-                provider=provider,
-                regex_enabled=False,
-            )
-            all_results[url] = report.model_dump()
 
+            # 1. Chunk the full text (regex pre-pass skipped).
+            chunks = chunk_text(content, n_chunks=n_chunks)
+
+            # 2. LLM on each chunk in parallel, with the FULL keyword list.
+            chunk_results = await analyze_chunks_async(
+                chunks,
+                keywords=KEYWORDS,  # full list — no regex narrowing
+                provider=provider,
+                max_concurrency=max_concurrency,
+            )
+
+            # 3. Merge chunks into one MaterialMetadata.
+            #    - regex_keywords=[]  → no union with regex top_k
+            #    - known_keywords=KEYWORDS → invented keywords still filtered
+            metadata = merge_chunk_results(
+                chunk_results,
+                regex_keywords=[],
+                known_keywords=KEYWORDS,
+            )
+            all_results[url] = metadata.model_dump()
+
+        # Print the fused JSON to stdout for quick inspection.
+        print(json.dumps(all_results, indent=2, ensure_ascii=False))
+
+        # Persist for later comparison with the regex+LLM pipeline output.
         filename = f"llm_only_results_{timestamp}.json"
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(all_results, f, indent=2, ensure_ascii=False)
