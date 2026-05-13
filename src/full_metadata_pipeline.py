@@ -119,6 +119,7 @@ async def get_all_metadata(
     fields_results["keywords"] = kept_keywords
     return fields_results
 
+
 def run_full_pipeline(target_url: str):
     logging.basicConfig(
         level=logging.INFO,
@@ -126,7 +127,7 @@ def run_full_pipeline(target_url: str):
     )
 
     TARGET_URL = target_url
-    SAVE_RESULTS = False # This allows to create a json in the src directory
+    SAVE_RESULTS = False  # This allows to create a json in the src directory
     LLM_ACTIVATED = True
     TOP_K = 16
     BATCH_SIZE = 8
@@ -159,4 +160,6 @@ def run_full_pipeline(target_url: str):
 
 
 if __name__ == "__main__":
-    run_full_pipeline("https://alan-turing-institute.github.io/rse-course/html/index.html")
+    run_full_pipeline(
+        "https://alan-turing-institute.github.io/rse-course/html/index.html"
+    )
