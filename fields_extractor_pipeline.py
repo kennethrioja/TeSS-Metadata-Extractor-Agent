@@ -66,7 +66,7 @@ def chunk_text(text: str, n_chunks: int = 3) -> list[str]:
     """
     if n_chunks <= 1 or not text:
         return [text] if text else []
-    size = max(1, len(text) // n_chunks)
+    size = max(1, len(text) // n_chunks) + 1
     return [text[i : i + size] for i in range(0, len(text), size)]
 
 
