@@ -1,0 +1,45 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: TeSS-Metadata-Extractor-Agent
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Kenneth
+    family-names: Rioja
+    email: kenneth.brian.rioja@cern.ch
+    affiliation: CERN
+    orcid: 'https://orcid.org/0000-0002-5177-0019'
+  - given-names: Hugo
+    family-names: Bacard
+    email: hugo.bacard@ijclab.in2p3.fr
+    affiliation: IN2P3
+    orcid: 'https://orcid.org/0000-0001-9216-494X'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20159523
+repository-code: >-
+  https://github.com/kennethrioja/TeSS-Metadata-Extractor-Agent
+abstract: >-
+  A metadata extractor agent to augment the metadata
+  retrieval of any TeSS training resource. The input is the
+  URL of a training material, the output is a JSON file with
+  the following fields: description, licence, status,
+  contact, doi, version, authors, contributors,
+  target_audience, prerequisites, competency_level,
+  learning_objectives, date_created, date_modified,
+  date_published.
+keywords:
+  - tess
+  - metadata
+  - llm
+  - ai
+  - training material
+  - everse
+license: CC-BY-4.0
+commit: c36feba
+version: v0.1.0
+date-released: '2026-05-13'
