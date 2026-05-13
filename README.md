@@ -16,12 +16,12 @@ Prerequisites:
 - Python >= 3.12, < 3.14
 - [pdm](https://pdm-project.org/en/latest/)
 
-1. `cp config.yaml.example config.yaml`
+1. `cp config/config.yaml.example config/config.yaml`
 2. `cp .env.example .env` and add your API keys
 3. Change in python scripts the LLM to use by changing `provider`
 4. `pdm install`
 5. `source .venv/bin/activate`
-6. `python pipeline.py`
+6. `python src/full_metadata_pipeline.py`
 
 ## Licence
 
