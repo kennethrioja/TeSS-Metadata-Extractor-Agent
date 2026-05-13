@@ -261,6 +261,7 @@ async def run_pipeline(
 # Execution
 if __name__ == "__main__":
     import os
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s | %(message)s",
@@ -270,7 +271,9 @@ if __name__ == "__main__":
     LLM_ACTIVATED = True  # toggle this to skip the LLM pass
     TOP_K = 16
     BATCH_SIZE = 8  # keywords per LLM call; 8 is safe for 7B models
-    PROVIDER_NAME = os.environ.get('PROVIDER')  # None -> default_provider from config.yaml
+    PROVIDER_NAME = os.environ.get(
+        "PROVIDER"
+    )  # None -> default_provider from config.yaml
 
     result = asyncio.run(
         run_pipeline(

@@ -6,6 +6,7 @@ async LLM pipeline with regex disabled (no top_k pre-selection, no
 union at merge time). The output format is identical to ``pipeline.py``'s
 output so the two JSONs are directly comparable.
 """
+
 import json
 import logging
 import os
@@ -13,10 +14,15 @@ from openai import AsyncOpenAI, OpenAI
 from config import get_provider_config
 from prompt_templates import FIELDS_SYSTEM_PROMPT, FIELDS_PROMPT_TEMPLATE
 from schemas import MaterialMetadata
+
 logger = logging.getLogger(__name__)
+
+
 def build_user_message(content: str, **kwargs) -> str:
     """Inject scraped text into the prompt template."""
     return FIELDS_PROMPT_TEMPLATE.format(scraped_text=content)
+
+
 def _parse_or_raise(completion) -> MaterialMetadata:
     """Extract the parsed pydantic object or raise with the refusal message."""
     parsed = completion.choices[0].message.parsed
@@ -26,6 +32,8 @@ def _parse_or_raise(completion) -> MaterialMetadata:
             f"{completion.choices[0].message.refusal}"
         )
     return parsed
+
+
 def analyze_content_with_llm(
     content: str,
     provider: str | None = None,
@@ -44,6 +52,8 @@ def analyze_content_with_llm(
         response_format=MaterialMetadata,
     )
     return _parse_or_raise(completion)
+
+
 async def analyze_content_with_llm_async(
     content: str,
     provider: str | None = None,
@@ -75,21 +85,26 @@ async def analyze_content_with_llm_async(
     finally:
         if own_client:
             await client.close()
+
+
 # ---------------------------------------------------------------------------
 # Ablation entry point: LLM-only (regex disabled)
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     import asyncio
     from datetime import datetime
+
     # Local imports: avoid a top-level circular import with pipeline.py,
     # which already imports from this module.
     from fields_extractor_pipeline import extract_page_metadata
     from scraper import scrape_site_to_dict
+
     logging.basicConfig(level=logging.INFO)
     target_url = (
         "https://carpentries-incubator.github.io/python-intermediate-development/"
     )
     provider = os.environ.get("PROVIDER")
+
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -106,4 +121,5 @@ if __name__ == "__main__":
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(all_results, f, indent=2, ensure_ascii=False)
         logger.info("Saved LLM-only results to %s", filename)
+
     asyncio.run(main())
