@@ -1,6 +1,5 @@
 import asyncio
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from keyword_extraction_pipeline import _classify_batch, llm_inspect
 from config import ProviderConfig
@@ -28,14 +27,20 @@ class TestClassifyBatch:
         payload = {
             "verdicts": [
                 {"keyword": "python", "reasoning": "core topic", "is_core": True},
-                {"keyword": "docker", "reasoning": "barely mentioned", "is_core": False},
+                {
+                    "keyword": "docker",
+                    "reasoning": "barely mentioned",
+                    "is_core": False,
+                },
             ]
         }
         client = _make_mock_client(payload)
         semaphore = asyncio.Semaphore(1)
         batch = [("python", 10), ("docker", 2)]
 
-        result = await _classify_batch(client, _TEST_PROVIDER, "doc text", batch, semaphore)
+        result = await _classify_batch(
+            client, _TEST_PROVIDER, "doc text", batch, semaphore
+        )
 
         assert len(result) == 2
         py_verdict = next(r for r in result if r["keyword"] == "python")
@@ -52,7 +57,9 @@ class TestClassifyBatch:
         client = _make_mock_client(payload)
         semaphore = asyncio.Semaphore(1)
 
-        result = await _classify_batch(client, _TEST_PROVIDER, "doc", [("python", 15)], semaphore)
+        result = await _classify_batch(
+            client, _TEST_PROVIDER, "doc", [("python", 15)], semaphore
+        )
 
         assert result[0]["count"] == 15
 

@@ -1,5 +1,4 @@
 import re
-import pytest
 from collections import Counter
 from regex_extractor import (
     build_pattern,
@@ -63,7 +62,9 @@ class TestCountKeywordOccurrences:
         assert counts["python"] == 3
 
     def test_case_sensitive_mode(self):
-        counts = count_keyword_occurrences("Python PYTHON python", ["python"], case_insensitive=False)
+        counts = count_keyword_occurrences(
+            "Python PYTHON python", ["python"], case_insensitive=False
+        )
         assert counts["python"] == 1
 
     def test_multiple_keywords(self):

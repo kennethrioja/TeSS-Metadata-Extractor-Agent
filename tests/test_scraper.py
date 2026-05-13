@@ -1,14 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from scraper import clean_markdown_urls, scrape_site_to_dict
 
 
 class TestCleanMarkdownUrls:
-    def test_removes_bare_http_url(self):
-        text = "Visit https://example.com for more info"
-        result = clean_markdown_urls(text)
-        assert "https://example.com" not in result
-        assert "Visit" in result
 
     def test_removes_bare_http_url(self):
         text = "See http://example.com/page"

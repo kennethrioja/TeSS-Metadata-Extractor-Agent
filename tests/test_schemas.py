@@ -48,7 +48,10 @@ class TestMaterialMetadataConstruction:
         assert len(m.resource_type) == 3
 
     def test_multiple_target_audiences(self):
-        data = {**VALID_DATA, "target_audience": ["Researcher", "PhD Student", "Data Scientist"]}
+        data = {
+            **VALID_DATA,
+            "target_audience": ["Researcher", "PhD Student", "Data Scientist"],
+        }
         m = MaterialMetadata(**data)
         assert len(m.target_audience) == 3
 
@@ -63,7 +66,12 @@ class TestMaterialMetadataConstruction:
             assert m.competency_level == level
 
     def test_empty_date_strings_are_valid(self):
-        data = {**VALID_DATA, "date_created": "", "date_modified": "", "date_published": ""}
+        data = {
+            **VALID_DATA,
+            "date_created": "",
+            "date_modified": "",
+            "date_published": "",
+        }
         m = MaterialMetadata(**data)
         assert m.date_created == ""
 

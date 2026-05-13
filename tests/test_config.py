@@ -28,7 +28,10 @@ class TestProviderConfig:
     def test_api_key_reads_from_env(self, monkeypatch):
         monkeypatch.setenv("MY_TEST_KEY", "secret-value")
         cfg = ProviderConfig(
-            name="p", model="m", base_url="http://x", temperature=0.0,
+            name="p",
+            model="m",
+            base_url="http://x",
+            temperature=0.0,
             api_key_env="MY_TEST_KEY",
         )
         assert cfg.api_key == "secret-value"
@@ -36,20 +39,29 @@ class TestProviderConfig:
     def test_api_key_none_when_env_missing(self, monkeypatch):
         monkeypatch.delenv("MISSING_KEY_XYZ", raising=False)
         cfg = ProviderConfig(
-            name="p", model="m", base_url="http://x", temperature=0.0,
+            name="p",
+            model="m",
+            base_url="http://x",
+            temperature=0.0,
             api_key_env="MISSING_KEY_XYZ",
         )
         assert cfg.api_key is None
 
     def test_api_key_none_when_no_env_var_configured(self):
         cfg = ProviderConfig(
-            name="p", model="m", base_url="http://x", temperature=0.0,
+            name="p",
+            model="m",
+            base_url="http://x",
+            temperature=0.0,
         )
         assert cfg.api_key is None
 
     def test_default_max_concurrency(self):
         cfg = ProviderConfig(
-            name="p", model="m", base_url="http://x", temperature=0.0,
+            name="p",
+            model="m",
+            base_url="http://x",
+            temperature=0.0,
         )
         assert cfg.max_concurrency == 1
 

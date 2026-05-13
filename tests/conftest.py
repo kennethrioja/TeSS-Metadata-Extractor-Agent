@@ -2,7 +2,6 @@ import pytest
 from config import ProviderConfig
 from schemas import MaterialMetadata
 
-
 SAMPLE_YAML_CONFIG = {
     "default_provider": "test_provider",
     "providers": {

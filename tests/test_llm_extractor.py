@@ -1,7 +1,12 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from schemas import MaterialMetadata
-from llm_extractor import build_user_message, _parse_or_raise, analyze_content_with_llm, analyze_content_with_llm_async
+from llm_extractor import (
+    build_user_message,
+    _parse_or_raise,
+    analyze_content_with_llm,
+    analyze_content_with_llm_async,
+)
 from prompt_templates import FIELDS_PROMPT_TEMPLATE
 
 _VALID_META = MaterialMetadata(
@@ -107,10 +112,14 @@ class TestAnalyzeContentWithLlmAsync:
         mock_completion.choices[0].message.refusal = None
 
         mock_client = AsyncMock()
-        mock_client.beta.chat.completions.parse = AsyncMock(return_value=mock_completion)
+        mock_client.beta.chat.completions.parse = AsyncMock(
+            return_value=mock_completion
+        )
 
         with patch("llm_extractor.get_provider_config", return_value=_MOCK_PROVIDER):
-            result = await analyze_content_with_llm_async("test content", client=mock_client)
+            result = await analyze_content_with_llm_async(
+                "test content", client=mock_client
+            )
 
         assert result is _VALID_META
 
@@ -119,7 +128,9 @@ class TestAnalyzeContentWithLlmAsync:
         mock_completion.choices[0].message.parsed = _VALID_META
 
         mock_client = AsyncMock()
-        mock_client.beta.chat.completions.parse = AsyncMock(return_value=mock_completion)
+        mock_client.beta.chat.completions.parse = AsyncMock(
+            return_value=mock_completion
+        )
         mock_client.close = AsyncMock()
 
         with patch("llm_extractor.get_provider_config", return_value=_MOCK_PROVIDER):
@@ -132,7 +143,9 @@ class TestAnalyzeContentWithLlmAsync:
         mock_completion.choices[0].message.parsed = _VALID_META
 
         mock_client = AsyncMock()
-        mock_client.beta.chat.completions.parse = AsyncMock(return_value=mock_completion)
+        mock_client.beta.chat.completions.parse = AsyncMock(
+            return_value=mock_completion
+        )
         mock_client.close = AsyncMock()
 
         with patch("llm_extractor.get_provider_config", return_value=_MOCK_PROVIDER):
@@ -143,7 +156,9 @@ class TestAnalyzeContentWithLlmAsync:
 
     async def test_closes_own_client_even_on_error(self):
         mock_client = AsyncMock()
-        mock_client.beta.chat.completions.parse = AsyncMock(side_effect=RuntimeError("API down"))
+        mock_client.beta.chat.completions.parse = AsyncMock(
+            side_effect=RuntimeError("API down")
+        )
         mock_client.close = AsyncMock()
 
         with patch("llm_extractor.get_provider_config", return_value=_MOCK_PROVIDER):

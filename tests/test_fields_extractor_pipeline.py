@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from schemas import MaterialMetadata
 from fields_extractor_pipeline import (
     chunk_text,
@@ -208,7 +208,9 @@ class TestAnalyzeChunksAsync:
     async def test_returns_list_of_material_metadata(self):
         m = make_metadata(description="chunk result")
 
-        with patch("fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER):
+        with patch(
+            "fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER
+        ):
             with patch("fields_extractor_pipeline.AsyncOpenAI") as MockOAI:
                 MockOAI.return_value = AsyncMock()
                 MockOAI.return_value.close = AsyncMock()
@@ -222,7 +224,9 @@ class TestAnalyzeChunksAsync:
         assert all(isinstance(r, MaterialMetadata) for r in result)
 
     async def test_raises_when_all_chunks_fail(self):
-        with patch("fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER):
+        with patch(
+            "fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER
+        ):
             with patch("fields_extractor_pipeline.AsyncOpenAI") as MockOAI:
                 MockOAI.return_value = AsyncMock()
                 MockOAI.return_value.close = AsyncMock()
@@ -244,7 +248,9 @@ class TestAnalyzeChunksAsync:
                 raise RuntimeError("first chunk failed")
             return m
 
-        with patch("fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER):
+        with patch(
+            "fields_extractor_pipeline.get_provider_config", return_value=_TEST_PROVIDER
+        ):
             with patch("fields_extractor_pipeline.AsyncOpenAI") as MockOAI:
                 MockOAI.return_value = AsyncMock()
                 MockOAI.return_value.close = AsyncMock()
