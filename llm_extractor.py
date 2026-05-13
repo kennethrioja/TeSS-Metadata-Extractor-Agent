@@ -98,7 +98,10 @@ async def analyze_content_with_llm_async(
             temperature=cfg.temperature,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": build_user_message(content, keywords=keywords)},
+                {
+                    "role": "user",
+                    "content": build_user_message(content, keywords=keywords),
+                },
             ],
             response_format=MaterialMetadata,
         )
@@ -117,13 +120,15 @@ if __name__ == "__main__":
 
     # Local imports: avoid a top-level circular import with pipeline.py,
     # which already imports from this module.
-    from pipeline import extract_page_metadata
+    from fields_extractor_pipeline import extract_page_metadata
     from scraper import scrape_site_to_dict
 
     logging.basicConfig(level=logging.INFO)
 
-    target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    provider = os.environ.get('PROVIDER')
+    target_url = (
+        "https://carpentries-incubator.github.io/python-intermediate-development/"
+    )
+    provider = os.environ.get("PROVIDER")
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
@@ -131,9 +136,7 @@ if __name__ == "__main__":
 
         all_results: dict[str, dict] = {}
         for url, content in scraped.items():
-            logger.info(
-                "Processing %s (%d chars) — regex DISABLED", url, len(content)
-            )
+            logger.info("Processing %s (%d chars) — regex DISABLED", url, len(content))
             report = await extract_page_metadata(
                 content,
                 n_chunks=2,

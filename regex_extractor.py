@@ -123,10 +123,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    scraped_content = asyncio.run(
-        scrape_site_to_dict(target_url, single_page=True)
-    )
+    target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
+    scraped_content = asyncio.run(scrape_site_to_dict(target_url, single_page=True))
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     keywords = load_keywords()
     logger.info("Loaded %d candidate keywords", len(keywords))
@@ -143,7 +141,7 @@ if __name__ == "__main__":
 
         print(f"Regex extraction completed in {delta:.4f} seconds")
         print(f"Matched {len(counts)} / {len(keywords)} candidate keywords")
-        print(f"Top 10 selected:")
+        print("Top 10 selected:")
         for kw in selected:
             print(f"  - {kw} ({counts[kw]} occurrences)")
 

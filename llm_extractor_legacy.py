@@ -98,7 +98,10 @@ async def analyze_content_with_llm_async(
             temperature=cfg.temperature,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": build_user_message(content, keywords=keywords)},
+                {
+                    "role": "user",
+                    "content": build_user_message(content, keywords=keywords),
+                },
             ],
             response_format=MaterialMetadata,
         )
@@ -118,13 +121,15 @@ if __name__ == "__main__":
     # Local imports: avoid a top-level circular import with pipeline.py,
     # which already imports from this module. The pipeline's helpers are
     # the source of truth for chunking, async orchestration, and merging.
-    from pipeline import analyze_chunks_async, chunk_text, merge_chunk_results
+    from fields_extractor_pipeline import analyze_chunks_async, chunk_text, merge_chunk_results
     from scraper import scrape_site_to_dict
 
     logging.basicConfig(level=logging.INFO)
 
-    target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    provider = os.environ.get('PROVIDER')
+    target_url = (
+        "https://carpentries-incubator.github.io/python-intermediate-development/"
+    )
+    provider = os.environ.get("PROVIDER")
     n_chunks = 3
     max_concurrency = 4
 
