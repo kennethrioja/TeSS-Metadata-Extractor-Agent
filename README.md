@@ -1,5 +1,11 @@
 # TeSS-Metadata-Extractor-Agent
 
+[![DOI](https://zenodo.org/badge/1235451518.svg)](https://doi.org/10.5281/zenodo.20159522)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+![python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue?style=flat)
+[![CI](https://github.com/kennethrioja/TeSS-Metadata-Extractor-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/kennethrioja/TeSS-Metadata-Extractor-Agent/actions/workflows/ci.yml)
+
+
 A metadata extractor agent to augment the metadata retrieval of any TeSS training resource
 
 ## Workflow
@@ -9,6 +15,7 @@ A metadata extractor agent to augment the metadata retrieval of any TeSS trainin
 3. **Extractor processes content**: The extractor analyzes the content and returns relevant metadata.
 
 For keywords, we use first a Regex based extractor that will keep relevant keywords from the defined list of keywords (i.e., `known_keywords.json`), then an LLM is used as a judge to review whether these keywords are relevant to the materials.
+Removing links during the scraping process helps the Regex counter not to count relevant words in the links (e.g., we saw a lot of github hits).
 
 ## Run it locally
 
@@ -16,12 +23,13 @@ Prerequisites:
 - Python >= 3.12, < 3.14
 - [pdm](https://pdm-project.org/en/latest/)
 
+Steps:
+
 1. `cp config/config.yaml.example config/config.yaml`
 2. `cp .env.example .env` and add your API keys
-3. Change in python scripts the LLM to use by changing `provider`
-4. `pdm install`
-5. `source .venv/bin/activate`
-6. `python src/full_metadata_pipeline.py`
+3. `pdm install`
+4. `source .venv/bin/activate`
+5. `python src/full_metadata_pipeline.py`
 
 ## Licence
 
