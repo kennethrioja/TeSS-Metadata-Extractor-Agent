@@ -73,7 +73,7 @@ def chunk_text(text: str, n_chunks: int = 3) -> list[str]:
 # ============================================================================
 # Merge per-chunk MaterialMetadata
 # ============================================================================
-_LIST_FIELDS = {"authors", "contributors"}
+_LIST_FIELDS = {"authors", "contributors", "target_audience"}
 _LONGEST_TEXT_FIELDS = {"description", "learning_objectives", "prerequisites"}
 
 

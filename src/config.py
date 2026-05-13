@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CONFIG_PATH = Path(__file__).parent / "config.yaml"
+CONFIG_PATH = Path(__file__).parent / "../config/config.yaml"
 
 
 @dataclass

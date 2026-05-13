@@ -119,14 +119,14 @@ async def get_all_metadata(
     fields_results["keywords"] = kept_keywords
     return fields_results
 
-
-if __name__ == "__main__":
+def run_full_pipeline(target_url: str):
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s | %(message)s",
     )
 
-    TARGET_URL = "https://alan-turing-institute.github.io/rse-course/html/index.html"
+    TARGET_URL = target_url
+    SAVE_RESULTS = False # This allows to create a json in the src directory
     LLM_ACTIVATED = True
     TOP_K = 16
     BATCH_SIZE = 8
@@ -146,9 +146,17 @@ if __name__ == "__main__":
         )
     )
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    out_path = Path(f"full_metadata_pipeline_results_{timestamp}.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-    print(f"\nSaved to {out_path}")
+    if SAVE_RESULTS:
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        out_path = Path(f"full_metadata_pipeline_results_{timestamp}.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2, ensure_ascii=False)
+        print(f"\nSaved to {out_path}")
+
     print(json.dumps(results, indent=2, ensure_ascii=False))
+
+    return results
+
+
+if __name__ == "__main__":
+    run_full_pipeline("https://alan-turing-institute.github.io/rse-course/html/index.html")
