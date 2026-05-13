@@ -1,9 +1,10 @@
 [project]
 name = "TeSS-Metadata-Extractor-Agent"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "Metadata Extractor Agent for TeSS"
 authors = [
-    {name = "Kenneth", email = "kenneth.brian.rioja@cern.ch"},
+    {name = "Kenneth Rioja", email = "kenneth.brian.rioja@cern.ch"},
+    {name = "Hugo Bacard", email = "hugo.bacard@ijclab.in2p3.fr"},
 ]
 dependencies = ["crawl4ai>=0.8.6", "openai>=2.36.0", "python-dotenv>=1.2.2", "pyyaml>=6.0.3", "pydantic>=2.13.4"]
 requires-python = ">=3.12,<3.14"
