@@ -323,7 +323,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
-    provider = os.environ.get("PROVIDER")
+    provider = os.environ.get('PROVIDER')
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
