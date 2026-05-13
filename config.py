@@ -48,9 +48,7 @@ def get_provider_config(provider_name: Optional[str] = None) -> ProviderConfig:
 
     if provider_name not in providers:
         available = ", ".join(providers.keys())
-        raise ValueError(
-            f"Unknown provider '{provider_name}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown provider '{provider_name}'. Available: {available}")
 
     return ProviderConfig(name=provider_name, **providers[provider_name])
 
@@ -58,4 +56,3 @@ def get_provider_config(provider_name: Optional[str] = None) -> ProviderConfig:
 def list_providers() -> list[str]:
     """Return the list of provider names available in the config."""
     return list(_load_yaml().get("providers", {}).keys())
-

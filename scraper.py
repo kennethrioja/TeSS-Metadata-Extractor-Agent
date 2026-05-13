@@ -1,6 +1,5 @@
 import asyncio
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
-from crawl4ai.extraction_strategy import NoExtractionStrategy
 import re
 
 
@@ -18,9 +17,9 @@ async def scrape_site_to_dict(base_url, single_page=True):
     # Optimized configuration for LLM content
     browser_config = BrowserConfig(headless=True)
     run_config = CrawlerRunConfig(
-        word_count_threshold=10,        # Ignore useless text fragments
-        exclude_external_links=True,    # Stay on the site
-        process_iframes=False           # Save time
+        word_count_threshold=10,  # Ignore useless text fragments
+        exclude_external_links=True,  # Stay on the site
+        process_iframes=False,  # Save time
     )
 
     async with AsyncWebCrawler(config=browser_config) as crawler:
@@ -39,9 +38,9 @@ async def scrape_site_to_dict(base_url, single_page=True):
 
         # Full mode: discover and scrape all internal pages
         internal_links = [
-            link['href']
+            link["href"]
             for link in result.links.get("internal", [])
-            if base_url in link['href']
+            if base_url in link["href"]
         ]
         # Add the home page
         internal_links.append(base_url)
@@ -61,33 +60,44 @@ async def scrape_site_to_dict(base_url, single_page=True):
 
     return results_dict
 
-import re
 
 def clean_markdown_urls(text):
     # Regex breakdown:
     # (?<=\()https?://\S+(?=\))  -> Matches URLs inside parentheses (Markdown links)
     # |                          -> OR
     # (?<!\]\()https?://\S+      -> Matches bare URLs not preceded by ']('
-    
-    # This pattern focuses on strings starting with http/https 
+
+    # This pattern focuses on strings starting with http/https
     # and continues until it hits a space or a closing parenthesis.
-    url_pattern = r'https?://[^\s\)]+'
-    
+    url_pattern = r"https?://[^\s\)]+"
+
     # We replace the found URLs with an empty string
-    cleaned_text = re.sub(url_pattern, '', text)
-    
+    cleaned_text = re.sub(url_pattern, "", text)
+
     # Optional: Clean up empty parentheses left behind: []() -> []
-    cleaned_text = cleaned_text.replace('()', '').replace('( "Permalink to this headline")', '')
-    
+    cleaned_text = cleaned_text.replace("()", "").replace(
+        '( "Permalink to this headline")', ""
+    )
+
     return cleaned_text
 
 
 # Usage examples
 if __name__ == "__main__":
     # Single page only (default behavior)
-    asyncio.run(scrape_site_to_dict("https://example.com", single_page=True))
-
-    # Full site 
-    asyncio.run(scrape_site_to_dict("https://example.com"))
-    # or explicitly:
-    asyncio.run(scrape_site_to_dict("https://example.com", single_page=False))
+    page_dict = asyncio.run(
+        scrape_site_to_dict(
+            "https://alan-turing-institute.github.io/rse-course/html/index.html",
+            single_page=True,
+        )
+    )
+    for key, content in page_dict.items():
+        # saving to disk
+        with open("test_scrap.md", "w") as f_in:
+            f_in.write(content)
+        print(content)
+        break
+    # # Full site
+    # asyncio.run(scrape_site_to_dict("https://example.com"))
+    # # or explicitly:
+    # asyncio.run(scrape_site_to_dict("https://example.com", single_page=False))

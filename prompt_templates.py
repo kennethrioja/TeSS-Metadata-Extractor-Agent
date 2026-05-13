@@ -64,3 +64,38 @@ The `keywords` field must contain ONLY entries copied verbatim from the allowed 
 
 Now produce the JSON object.
 """
+
+
+FIELDS_SYSTEM_PROMPT = (
+    "You are a metadata-extraction assistant. You read a training-material "
+    "web page and return a single JSON object that fits the provided schema. "
+    'If a field is not in the text, you return the exact string "Not found". '
+    "You never invent information."
+)
+
+
+FIELDS_PROMPT_TEMPLATE = """\
+Extract metadata from the training-material text below and return it as a JSON object.
+
+## Output rules
+
+1. Return exactly ONE JSON object. No markdown fences, no commentary, no preamble, no trailing text.
+2. If information for a field (except for dates) is not in the text, set that field to the exact string "Not found".
+4. List-typed fields must be JSON arrays of strings. Use [] only when no item applies.
+
+## Date fields – strict rule
+
+Dates MUST use the format "YYYY-MM-DD", if the information is not in the text, you MUST set that field to an empty string (i.e., "").
+
+## Licence field – strict rule
+
+Licence MUST follow SPDX standardized short identifier AND NOT the human readable format, e.g. it must be CC-BY-4.0 AND NOT Creative Commons Attribution 4.0 International
+
+## Text to analyze
+
+<text>
+{scraped_text}
+</text>
+
+Now produce the JSON object.
+"""

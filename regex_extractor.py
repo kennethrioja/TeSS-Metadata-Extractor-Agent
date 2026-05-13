@@ -19,18 +19,44 @@ import json
 import logging
 import re
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
 KEYWORDS_PATH = Path(__file__).parent / "known_keywords.json"
 
 
 def load_keywords(path: Path = KEYWORDS_PATH) -> list[str]:
-    """Charge la liste de mots-clés depuis le JSON (même source que llm_extractor)."""
     with open(path, "r", encoding="utf-8") as f_in:
         data = json.load(f_in)
     return data["ai_filtered_keywords"]
+
+
+def build_pattern(keyword: str) -> str:
+    """Build a robust boundary pattern for a single keyword.
+
+    - Splits the keyword on whitespace so re.escape never touches a space
+      (re.escape in 3.7+ adds a backslash before whitespace, which
+      breaks naive \\s+ substitution).
+    - Joins tokens with \\s+ so multi-word keywords still match across
+      line breaks and double spaces.
+    - Uses \\b at alphanumeric edges, (?<!\\w) / (?!\\w) otherwise, so
+      keywords like 'c++', '.net', 'c#' get correct boundaries.
+    """
+    tokens = keyword.split()
+    if not tokens:
+        return ""
+    escaped = r"\s+".join(re.escape(t) for t in tokens)
+
+    left = r"\b" if keyword[:1].isalnum() or keyword[:1] == "_" else r"(?<!\w)"
+    right = r"\b" if keyword[-1:].isalnum() or keyword[-1:] == "_" else r"(?!\w)"
+    return left + escaped + right
+
+
+@lru_cache(maxsize=4096)
+def _compile(keyword: str, case_insensitive: bool) -> re.Pattern:
+    flags = re.IGNORECASE if case_insensitive else 0
+    return re.compile(build_pattern(keyword), flags)
 
 
 def count_keyword_occurrences(
@@ -38,52 +64,14 @@ def count_keyword_occurrences(
     keywords: list[str],
     case_insensitive: bool = True,
 ) -> Counter:
-    """Compte les occurrences de chaque mot-clé dans le texte.
-
-    Utilise des limites de mot (``\\b``) pour éviter les correspondances
-    partielles (« java » ne sera pas trouvé dans « javascript »).
-    Les mots-clés multi-mots (« machine learning ») sont gérés via
-    ``re.escape`` qui préserve les espaces et échappe les caractères spéciaux.
-
-    Args:
-        text: Texte source dans lequel chercher.
-        keywords: Liste de mots-clés candidats.
-        case_insensitive: Recherche insensible à la casse (défaut: True).
-
-    Returns:
-        Counter ne contenant que les mots-clés avec au moins une occurrence.
-        L'absence d'un mot-clé dans le résultat signifie ``count == 0``.
-    """
-    flags = re.IGNORECASE if case_insensitive else 0
     counts: Counter = Counter()
     for kw in keywords:
         if not kw:
             continue
-        pattern = r"\b" + re.escape(kw) + r"\b"
-        matches = re.findall(pattern, text, flags=flags)
+        matches = _compile(kw, case_insensitive).findall(text)
         if matches:
             counts[kw] = len(matches)
     return counts
-
-
-def top_k_keywords(
-    text: str,
-    keywords: list[str],
-    k: int = 10,
-) -> list[str]:
-    """Retourne les k mots-clés les plus fréquents dans le texte.
-
-    Wrapper de convenance autour de ``count_keyword_occurrences``.
-
-    Args:
-        text: Texte source.
-        keywords: Liste de mots-clés candidats.
-        k: Nombre maximum de mots-clés à retourner.
-
-    Returns:
-        Liste de mots-clés triée par fréquence décroissante (≤ k éléments).
-    """
-    return [kw for kw, _ in count_keyword_occurrences(text, keywords).most_common(k)]
 
 
 def split_keywords(
@@ -91,22 +79,6 @@ def split_keywords(
     all_keywords: list[str],
     k: int = 10,
 ) -> tuple[list[str], list[str]]:
-    """Sépare la liste complète en (top_k regex, candidats restants pour le LLM).
-
-    Le second passage LLM ne devrait recevoir que ``remaining`` — pas la
-    liste complète — pour éviter qu'il « redécouvre » ce que le regex a
-    déjà confirmé, et pour réduire la pression sur les petits modèles.
-
-    Args:
-        counts: Compteur retourné par ``count_keyword_occurrences``.
-        all_keywords: Liste complète des mots-clés candidats.
-        k: Taille du top à sélectionner.
-
-    Returns:
-        Tuple ``(selected, remaining)``:
-          - ``selected``: top_k mots-clés trouvés par regex, triés par fréquence.
-          - ``remaining``: mots-clés candidats non sélectionnés (à passer au LLM).
-    """
     selected = [kw for kw, _ in counts.most_common(k)]
     selected_set = set(selected)
     remaining = [kw for kw in all_keywords if kw not in selected_set]
@@ -123,10 +95,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    target_url = "https://carpentries-incubator.github.io/python-intermediate-development/"
-    scraped_content = asyncio.run(
-        scrape_site_to_dict(target_url, single_page=True)
-    )
+    target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
+    scraped_content = asyncio.run(scrape_site_to_dict(target_url, single_page=True))
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     keywords = load_keywords()
     logger.info("Loaded %d candidate keywords", len(keywords))
@@ -139,11 +109,11 @@ if __name__ == "__main__":
         counts = count_keyword_occurrences(content, keywords)
         delta = time() - start
 
-        selected, remaining = split_keywords(counts, keywords, k=10)
+        selected, remaining = split_keywords(counts, keywords, k=100)
 
         print(f"Regex extraction completed in {delta:.4f} seconds")
         print(f"Matched {len(counts)} / {len(keywords)} candidate keywords")
-        print(f"Top 10 selected:")
+        print("Top 10 selected:")
         for kw in selected:
             print(f"  - {kw} ({counts[kw]} occurrences)")
 
