@@ -25,8 +25,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from config import get_provider_config
-from llm_extractor import KEYWORDS, analyze_content_with_llm_async
-from regex_extractor import count_keyword_occurrences, split_keywords
+from llm_extractor import analyze_content_with_llm_async
 from schemas import MaterialMetadata
 
 logger = logging.getLogger(__name__)
@@ -52,8 +51,6 @@ class PageExtractionReport(BaseModel):
 
     merged: MaterialMetadata
     chunks: list[MaterialMetadata]
-    regex_keywords: list[str]
-    discarded_keywords: list[str]
     extraction_seconds: float
 
 
@@ -74,43 +71,9 @@ def chunk_text(text: str, n_chunks: int = 3) -> list[str]:
 
 
 # ============================================================================
-# Keyword validation
-# ============================================================================
-def validate_keywords(
-    candidates: Iterable[str],
-    known_keywords: Iterable[str],
-) -> tuple[list[str], list[str]]:
-    """Split LLM-emitted keywords into (valid_canonical, invented).
-
-    Comparison is case-insensitive and whitespace-trimmed. Returned valid
-    entries use the canonical spelling from ``known_keywords``. Invented
-    entries are logged and returned so the caller can preserve them in
-    audit output.
-    """
-    canonical = {kw.lower().strip(): kw for kw in known_keywords}
-    valid: list[str] = []
-    invented: list[str] = []
-    for c in candidates or []:
-        if not c or c == "Not found":
-            continue
-        canon = canonical.get(c.lower().strip())
-        if canon is not None:
-            valid.append(canon)
-        else:
-            invented.append(c)
-    if invented:
-        logger.warning(
-            "LLM produced %d invented keyword(s) (discarded): %s",
-            len(invented),
-            invented,
-        )
-    return valid, invented
-
-
-# ============================================================================
 # Merge per-chunk MaterialMetadata
 # ============================================================================
-_LIST_FIELDS = {"keywords", "authors", "contributors"}
+_LIST_FIELDS = {"authors", "contributors"}
 _LONGEST_TEXT_FIELDS = {"description", "learning_objectives", "prerequisites"}
 
 
@@ -135,8 +98,6 @@ def _merge_list_field(values: list[list[str]]) -> list[str]:
 
 def merge_chunk_results(
     chunk_results: list[MaterialMetadata],
-    regex_keywords: list[str],
-    known_keywords: Iterable[str],
 ) -> tuple[MaterialMetadata, list[str]]:
     """Fuse per-chunk results into one MaterialMetadata.
 
@@ -154,8 +115,7 @@ def merge_chunk_results(
 
     merged: dict = {}
     for field in MaterialMetadata.model_fields:
-        if field == "keywords":
-            continue  # handled separately below
+
         values = [getattr(r, field) for r in chunk_results]
         if field in _LIST_FIELDS:
             merged[field] = _merge_list_field(values)
@@ -164,11 +124,7 @@ def merge_chunk_results(
         else:
             merged[field] = _merge_scalar(values, "first")
 
-    llm_keywords_flat = [kw for r in chunk_results for kw in (r.keywords or [])]
-    validated, discarded = validate_keywords(llm_keywords_flat, known_keywords)
-    merged["keywords"] = _dedup_preserve_order([*regex_keywords, *validated])
-
-    return MaterialMetadata(**merged), discarded
+    return MaterialMetadata(**merged)
 
 
 # ============================================================================
@@ -176,7 +132,6 @@ def merge_chunk_results(
 # ============================================================================
 async def analyze_chunks_async(
     chunks: list[str],
-    keywords: list[str],
     provider: str | None = None,
     max_concurrency: int | None = None,
 ) -> list[MaterialMetadata]:
@@ -221,7 +176,7 @@ async def analyze_chunks_async(
                 "Analyzing chunk %d/%d (%d chars)", idx + 1, len(chunks), len(chunk)
             )
             return await analyze_content_with_llm_async(
-                chunk, provider=provider, keywords=keywords, client=client
+                chunk, provider=provider, client=client
             )
 
     try:
@@ -247,12 +202,9 @@ async def analyze_chunks_async(
 async def extract_page_metadata(
     content: str,
     *,
-    all_keywords: list[str] = KEYWORDS,
-    top_k: int = 10,
     n_chunks: int = 3,
     provider: str | None = None,
     max_concurrency: int | None = None,
-    regex_enabled: bool = True,
 ) -> PageExtractionReport:
     """Regex (optional) + LLM + merge for a single page.
 
@@ -273,43 +225,22 @@ async def extract_page_metadata(
 
     Returns:
         ``PageExtractionReport`` with the merged metadata, per-chunk
-        results, regex contribution, and discarded keywords.
+        results
     """
     start = time.perf_counter()
-
-    if regex_enabled:
-        counts = count_keyword_occurrences(content, all_keywords)
-        top, remaining = split_keywords(counts, all_keywords, k=top_k)
-        logger.info(
-            "Regex enabled: selected %d top keyword(s) %s; %d candidates left for LLM",
-            len(top),
-            top,
-            len(remaining),
-        )
-    else:
-        top, remaining = [], list(all_keywords)
-        logger.info(
-            "Regex disabled: sending full keyword list (%d entries) to LLM",
-            len(remaining),
-        )
 
     chunks = chunk_text(content, n_chunks=n_chunks)
     chunk_results = await analyze_chunks_async(
         chunks,
-        keywords=remaining,
         provider=provider,
         max_concurrency=max_concurrency,
     )
 
-    merged, discarded = merge_chunk_results(
-        chunk_results, regex_keywords=top, known_keywords=all_keywords
-    )
+    merged = merge_chunk_results(chunk_results)
 
     return PageExtractionReport(
         merged=merged,
         chunks=chunk_results,
-        regex_keywords=top,
-        discarded_keywords=discarded,
         extraction_seconds=time.perf_counter() - start,
     )
 
@@ -323,7 +254,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     target_url = "https://alan-turing-institute.github.io/rse-course/html/index.html"
-    provider = os.environ.get('PROVIDER')
+    provider = os.environ.get("PROVIDER")
 
     async def main() -> None:
         scraped = await scrape_site_to_dict(target_url, single_page=True)
@@ -334,14 +265,12 @@ if __name__ == "__main__":
             logger.info("Processing %s (%d chars)", url, len(content))
             report = await extract_page_metadata(
                 content,
-                top_k=10,
                 n_chunks=2,
                 provider=provider,
-                regex_enabled=True,
             )
             all_results[url] = report.model_dump()
 
-        filename = f"pipeline_results_{timestamp}.json"
+        filename = f"fields_extractor_pipeline_results_{timestamp}.json"
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(all_results, f, indent=2, ensure_ascii=False)
         logger.info("Saved final results to %s", filename)

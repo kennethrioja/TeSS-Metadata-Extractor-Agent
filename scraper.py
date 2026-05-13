@@ -61,8 +61,6 @@ async def scrape_site_to_dict(base_url, single_page=True):
     return results_dict
 
 
-
-
 def clean_markdown_urls(text):
     # Regex breakdown:
     # (?<=\()https?://\S+(?=\))  -> Matches URLs inside parentheses (Markdown links)
@@ -95,7 +93,7 @@ if __name__ == "__main__":
     )
     for key, content in page_dict.items():
         # saving to disk
-        with open("test_scrap.md", 'w') as f_in:
+        with open("test_scrap.md", "w") as f_in:
             f_in.write(content)
         print(content)
         break

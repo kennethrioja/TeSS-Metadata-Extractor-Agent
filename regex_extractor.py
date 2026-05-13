@@ -108,7 +108,7 @@ if __name__ == "__main__":
         start = time()
         counts = count_keyword_occurrences(content, keywords)
         delta = time() - start
-        
+
         selected, remaining = split_keywords(counts, keywords, k=100)
 
         print(f"Regex extraction completed in {delta:.4f} seconds")

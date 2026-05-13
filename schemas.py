@@ -31,7 +31,7 @@ class MaterialMetadata(BaseModel):
     # scientific_topics: str = Field(
     #     description="Scientific field of the material, following a certain ontology, by default from EDAM"
     # )
-    
+
     licence: str = Field(
         description="Licence MUST follow SPDX standardized short identifier AND NOT the human readable format, e.g. it must be CC-BY-4.0 AND NOT Creative Commons ..."
     )
